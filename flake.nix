@@ -68,6 +68,6 @@
         };
       });
 
-      formatter = eachSystem (system: pkgs: pkgs.csharpier);
+      formatter = eachSystem (system: pkgs: self.packages.${system}.fmt);
     };
 }
