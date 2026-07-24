@@ -59,6 +59,17 @@
             '';
             installPhase = "true";
           };
+
+        mkRun = { package, assembly }:
+          pkgs.writeShellApplication {
+            name = "run-csharp";
+            runtimeInputs = [ pkgs.dotnet-sdk_8 ];
+            text = ''
+              dll=$(find ${package} -type f -name '${assembly}.dll' -print -quit)
+              test -n "$dll" || { echo "${assembly}.dll not found" >&2; exit 1; }
+              exec dotnet "$dll"
+            '';
+          };
       });
 
       devShells = eachSystem (system: pkgs: {
