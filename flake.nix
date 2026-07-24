@@ -29,7 +29,7 @@
       });
 
       devShells = eachSystem (system: pkgs: {
-        default = pkgs.mkShell { packages = [ pkgs.dotnet-sdk_8 ]; };
+        default = pkgs.mkShell { packages = [ pkgs.dotnet-sdk_8 pkgs.csharp-ls ]; };
       });
 
       formatter = eachSystem (system: pkgs: pkgs.nixfmt-rfc-style);
