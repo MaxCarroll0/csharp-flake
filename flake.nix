@@ -14,7 +14,17 @@
           name = "fmt-csharp";
           runtimeInputs = [ pkgs.csharpier ];
           text = ''
-            if (( $# )); then csharpier format "$@"; else csharpier format .; fi
+            if (( $# )); then
+              files=("$@")
+            elif git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+              mapfile -t files < <(git ls-files -- '*.cs' '*.csproj')
+            else
+              mapfile -t files < <(
+                find . \( -name .git -o -name .direnv -o -name bin -o -name obj \) -prune \
+                  -o -type f \( -name '*.cs' -o -name '*.csproj' \) -print
+              )
+            fi
+            (( ''${#files[@]} )) && csharpier format "''${files[@]}"
           '';
         };
 
@@ -35,12 +45,12 @@
         mkBuild = { src, name ? "csharp-build" }:
           pkgs.stdenvNoCC.mkDerivation {
             inherit name src;
-            nativeBuildInputs = [ pkgs.dotnet-sdk_8 pkgs.csharpier ];
+            nativeBuildInputs = [ pkgs.dotnet-sdk_8 self.packages.${system}.fmt ];
             buildPhase = ''
               export DOTNET_CLI_HOME="$TMPDIR/dotnet"
               export NUGET_PACKAGES="$TMPDIR/nuget"
               mkdir -p "$DOTNET_CLI_HOME" "$NUGET_PACKAGES" "$out"
-              csharpier format .
+              fmt-csharp
               target=$(find . -name '*.sln' -print -quit)
               test -n "$target" || target=$(find . -name '*.csproj' -print -quit)
               test -n "$target" || { echo 'No .sln or .csproj found' >&2; exit 1; }
